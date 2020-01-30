@@ -7,11 +7,13 @@ function initializeCSSObjects(CSS) {
 	var F = Function
 	var O = Object
 	var arrp = A.prototype
+	var aEvery = A.every
 	var aIndexOf = arrp.indexOf
 	var aJoin = arrp.join
 	var aPush = arrp.push
 	var aSlice = arrp.slice
 	var aSplice = arrp.splice
+	var funp = F.prototype
 	var oAssign = O.assign || function (target) {
 		for (var i = 0, source; source = ++i in arguments && O(arguments[i]);)
 			for (var name in source)
@@ -94,6 +96,15 @@ function initializeCSSObjects(CSS) {
 			replace: function replace(replacee) {
 				var index = this.indexOf(replacee)
 				if (index > -1) aSplice.bind(this.value, index, 1).apply(null, aSlice.call(arguments, 1).filter(filterCSSValuesForParent, this)).forEach(forEachCSSValueOffParent, this)
+			},
+			walk: function walk(cb) {
+				cb = typeof cb === 'function' ? cb : funp
+				aEvery.call(O(this.value), function (node) {
+					if (cb.call(this, node) !== false) {
+						if (typeof node.walk === 'function') node.walk(cb)
+						return true
+					}
+				}, this)
 			},
 			toString: CSSString.prototype.toString
 		}
