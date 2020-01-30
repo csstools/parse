@@ -7,7 +7,7 @@ function initializeCSSObjects(CSS) {
 	var F = Function
 	var O = Object
 	var arrp = A.prototype
-	var aEvery = A.every
+	var aEvery = arrp.every
 	var aIndexOf = arrp.indexOf
 	var aJoin = arrp.join
 	var aPush = arrp.push
@@ -99,8 +99,8 @@ function initializeCSSObjects(CSS) {
 			},
 			walk: function walk(cb) {
 				cb = typeof cb === 'function' ? cb : funp
-				aEvery.call(O(this.value), function (node) {
-					if (cb.call(this, node) !== false) {
+				aEvery.call(O(this.value), function (node, index) {
+					if (cb.call(this, node, index) !== false) {
 						if (typeof node.walk === 'function') node.walk(cb)
 						return true
 					}
@@ -183,6 +183,10 @@ var cssb = new CSS.CSSBlock({
 	),
 	delimiterStart: '',
 	delimiterEnd: ''
+})
+
+cssb.walk(function (node, index) {
+	console.log('node', index)
 })
 
 cssnib = new CSS.CSSNameIdentifier({ value: 'blue' })
