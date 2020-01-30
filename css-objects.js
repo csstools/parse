@@ -3,8 +3,12 @@ CSS = {}
 initializeCSSObjects(CSS)
 
 function initializeCSSObjects(CSS) {
+	var A = Array
 	var F = Function
 	var O = Object
+	var arrp = A.prototype
+	var aJoin = arrp.join
+	var aPush = arrp.push
 	var oAssign = O.assign || function (target) {
 		for (var i = 0, source; source = ++i in arguments && O(arguments[i]);)
 			for (var name in source)
@@ -39,6 +43,15 @@ function initializeCSSObjects(CSS) {
 		value: {
 			toString: function toString() {
 				return '' + this.delimiterStart + this.value + this.delimiterEnd
+			}
+		}
+	})
+	var CSSList = CSS.createClass('List', function () {
+		aPush.apply(this, arguments)
+	}, Array, {
+		value: {
+			toString: function toString() {
+				return aJoin.call(O(this.value))
 			}
 		}
 	})
@@ -78,14 +91,32 @@ function initializeCSSObjects(CSS) {
 			}
 		}
 	})
+	CSS.createClass('Block', function (details) {
+		oAssign(this, { value: new CSSList, delimiterStart: '', delimiterEnd: '' }, details)
+	}, CSSValue, {
+		value: {
+			toString: function toString() {
+				aJoin.call(this, '')
+			}
+		}
+	})
 	return CSS
 }
 
 console.log([
 	'' + new CSS.CSSComment({ value: ' test ', delimiterStart: '/*', delimiterEnd: '*/' }) === '/* test */',
+	'' + new CSS.CSSWhitespace({ value: '\n' }) === '\n',
 	'' + new CSS.CSSString({ value: 'test', delimiterStart: '"', delimiterEnd: '"' }) === '"test"',
 	'' + new CSS.CSSNameIdentifier({ value: 'test' }) === 'test',
 	'' + new CSS.CSSHashIdentifier({ value: 'test' }) === '#test',
 	'' + new CSS.CSSAtIdentifier({ value: 'test' }) === '@test',
-	'' + new CSS.CSSNumber({ value: '5', unit: 'px' }) === '5px'
+	'' + new CSS.CSSNumber({ value: '5', unit: 'px' }) === '5px',
+	(new CSS.CSSList(
+		new CSS.CSSWhitespace('\n\t'),
+		new CSS.CSSNameIdentifier('color'),
+		new CSS.CSSDelimiter(':'),
+		new CSS.CSSWhitespace(' '),
+		new CSS.CSSNameIdentifier('blue'),
+		new CSS.CSSWhitespace('\n'),
+	))
 ])
