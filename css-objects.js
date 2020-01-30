@@ -38,6 +38,16 @@ function initializeCSSObjects(CSS) {
 			index: function() {
 				return CSSBlock.prototype.indexOf.call(O(this.parent), this)
 			}
+		},
+		value: {
+			removeSelf: function removeSelf() {
+				CSSBlock.prototype.remove.bind(O(this.parent), this)
+				return this
+			},
+			replaceSelf: function replaceSelf() {
+				CSSBlock.prototype.replace.bind(O(this.parent), this).apply(null, arguments)
+				return this
+			}
 		}
 	})
 	var CSSValue = CSS.createClass('Value', CSSObject, CSSObject)
@@ -65,7 +75,9 @@ function initializeCSSObjects(CSS) {
 		}
 	})
 	var CSSBlock = CSS.createClass('Block', function (details) {
+		var value = O(O(details).value)
 		oAssign(this, { parent: null, value: new CSSList, delimiterStart: '', delimiterEnd: '' }, details)
+		aSplice.bind(O(this.value), 0, O(this.value).length).apply(null, aSlice.call(O(O(details).value)).filter(filterCSSValuesForParent, this))
 	}, CSSValue, {
 		value: {
 			append: function append() {
@@ -76,6 +88,9 @@ function initializeCSSObjects(CSS) {
 			},
 			prepend: function prepend() {
 				aSplice.bind(O(this.value), 0, 0).apply(null, aSlice.call(arguments).filter(filterCSSValuesForParent, this))
+			},
+			remove: function remove(removee) {
+				CSSBlock.prototype.replace.call(this, removee)
 			},
 			replace: function replace(replacee) {
 				var index = this.indexOf(replacee)
@@ -175,3 +190,8 @@ cssb.replace(cssnib, cssnir)
 console.log([ '' + cssb === 'color: rebeccapurple' ])
 console.log([ cssnib.index === -1, cssnir.index === 3 ])
 console.log([ cssnib.parent === null, cssnir.parent === cssb ])
+
+cssb.remove(cssnir)
+console.log([ '' + cssb === 'color: ' ])
+console.log([ cssb.value[0] === cssb.value[0].removeSelf() ])
+console.log([ '' + cssb === 'color: ' ])
