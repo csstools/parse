@@ -33,9 +33,15 @@ function initializeCSSObjects(CSS) {
 		Class.prototype = oCreate(Super.prototype, descriptors)
 		return Class
 	}
-	var CSSObject = CSS.createClass('Object', function (details) { oAssign(this, details) }, Object)
+	var CSSObject = CSS.createClass('Object', function (details) { oAssign(this, { parent: null }, details) }, Object, {
+		get: {
+			index: function() {
+				return CSSBlock.prototype.indexOf.call(O(this.parent), this)
+			}
+		}
+	})
 	var CSSValue = CSS.createClass('Value', CSSObject, CSSObject)
-	var CSSDelimiter = CSS.createClass('Delimiter', function (details) { oAssign(this, { value: '' }, details) }, CSSValue, {
+	var CSSDelimiter = CSS.createClass('Delimiter', function (details) { oAssign(this, { parent: null, value: '' }, details) }, CSSValue, {
 		value: {
 			toString: function toString() {
 				return '' + this.value
@@ -59,15 +65,21 @@ function initializeCSSObjects(CSS) {
 		}
 	})
 	var CSSBlock = CSS.createClass('Block', function (details) {
-		oAssign(this, { value: new CSSList, delimiterStart: '', delimiterEnd: '' }, details)
+		oAssign(this, { parent: null, value: new CSSList, delimiterStart: '', delimiterEnd: '' }, details)
 	}, CSSValue, {
 		value: {
 			append: function append() {
 				aPush.apply(O(this.value), aSlice.call(arguments).filter(filterCSSValuesForParent, this))
 			},
+			indexOf: function indexOf(indexee) {
+				return aIndexOf.call(O(this.value), indexee)
+			},
+			prepend: function prepend() {
+				aSplice.bind(O(this.value), 0, 0).apply(null, aSlice.call(arguments).filter(filterCSSValuesForParent, this))
+			},
 			replace: function replace(replacee) {
-				var index = aIndexOf.call(O(this.value), replacee)
-				if (index > -1) aSplice.bind(this.value, index, 1).apply(null, aSlice.call(arguments, 1).filter(filterCSSValuesForParent, this))
+				var index = this.indexOf(replacee)
+				if (index > -1) aSplice.bind(this.value, index, 1).apply(null, aSlice.call(arguments, 1).filter(filterCSSValuesForParent, this)).forEach(forEachCSSValueOffParent, this)
 			},
 			toString: CSSString.prototype.toString
 		}
@@ -101,7 +113,7 @@ function initializeCSSObjects(CSS) {
 			toString: CSSDelimiter.prototype.toString
 		}
 	})
-	CSS.createClass('Number', function (details) { oAssign(this, { value: '', unit: '' }, details) }, CSSValue, {
+	CSS.createClass('Number', function (details) { oAssign(this, { parent: null, value: '', unit: '' }, details) }, CSSValue, {
 		value: {
 			toString: function toString() {
 				return '' + this.value + this.unit
@@ -110,6 +122,9 @@ function initializeCSSObjects(CSS) {
 	})
 	function filterCSSValuesForParent(node) {
 		if (node instanceof CSSValue) return node.parent = this
+	}
+	function forEachCSSValueOffParent(node) {
+		if (O(node).parent === this) return node.parent = null
 	}
 	return CSS
 }
@@ -152,7 +167,11 @@ cssb.append(
 	new CSS.CSSWhitespace({ value: ' ' }),
 	cssnib
 )
+console.log([ cssnib.index === 3, cssnir.index === -1 ])
+console.log([ cssnib.parent === cssb, cssnir.parent === null ])
 
 cssb.replace(cssnib, cssnir)
 
 console.log([ '' + cssb === 'color: rebeccapurple' ])
+console.log([ cssnib.index === -1, cssnir.index === 3 ])
+console.log([ cssnib.parent === null, cssnir.parent === cssb ])
