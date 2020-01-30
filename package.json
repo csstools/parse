@@ -1,0 +1,10 @@
+{
+  "name": "@csstools/parse",
+  "private": true,
+  "scripts": {
+    "start": "serve --no-etag --cors"
+  },
+  "dependencies": {
+    "serve": "11.3.0"
+  }
+}

@@ -1,7 +1,3 @@
-CSS = {}
-
-initializeCSSObjects(CSS)
-
 function initializeCSSObjects(CSS) {
 	var A = Array
 	var F = Function
@@ -39,6 +35,9 @@ function initializeCSSObjects(CSS) {
 		get: {
 			index: function() {
 				return CSSBlock.prototype.indexOf.call(O(this.parent), this)
+			},
+			type: function() {
+				return '' + O(this.constructor).name
 			}
 		},
 		value: {
@@ -49,6 +48,18 @@ function initializeCSSObjects(CSS) {
 			replaceSelf: function replaceSelf() {
 				CSSBlock.prototype.replace.bind(O(this.parent), this).apply(null, arguments)
 				return this
+			},
+			toJSON: function toJSON() {
+				return this.valueOf()
+			},
+			valueOf: function valueOf() {
+				var primitive = { type: O(this.constructor).name }
+				for (var name in this) {
+					if (name !== 'parent' && typeof this[name] !== 'function' && this !== window) {
+						primitive[name] = getValueOf(this[name])
+					}
+				}
+				return primitive
 			}
 		}
 	})
@@ -73,6 +84,9 @@ function initializeCSSObjects(CSS) {
 		value: {
 			toString: function toString() {
 				return aJoin.call(this, '')
+			},
+			valueOf: function valueOf() {
+				return arrp.map.call(this, getValueOf)
 			}
 		}
 	})
@@ -91,11 +105,12 @@ function initializeCSSObjects(CSS) {
 				aSplice.bind(O(this.value), 0, 0).apply(null, aSlice.call(arguments).filter(filterCSSValuesForParent, this))
 			},
 			remove: function remove(removee) {
-				CSSBlock.prototype.replace.call(this, removee)
+				return CSSBlock.prototype.replace.call(this, removee)
 			},
 			replace: function replace(replacee) {
 				var index = this.indexOf(replacee)
 				if (index > -1) aSplice.bind(this.value, index, 1).apply(null, aSlice.call(arguments, 1).filter(filterCSSValuesForParent, this)).forEach(forEachCSSValueOffParent, this)
+				return this
 			},
 			walk: function walk(cb) {
 				cb = typeof cb === 'function' ? cb : funp
@@ -107,6 +122,15 @@ function initializeCSSObjects(CSS) {
 				}, this)
 			},
 			toString: CSSString.prototype.toString
+		}
+	})
+	CSS.createClass('Function', function (details) {
+		oAssign(this, { parent: null, name: '', value: new CSSList, delimiterStart: '', delimiterEnd: '' }, details)
+	}, CSSBlock, {
+		value: {
+			toString: function toString() {
+				return '' + this.name + this.delimiterStart + this.value + this.delimiterEnd
+			}
 		}
 	})
 	CSS.createClass('AtIdentifier', CSSDelimiter, CSSValue, {
@@ -150,6 +174,9 @@ function initializeCSSObjects(CSS) {
 	}
 	function forEachCSSValueOffParent(node) {
 		if (O(node).parent === this) return node.parent = null
+	}
+	function getValueOf(value) {
+		return value === O(value) ? value.valueOf() : value
 	}
 	return CSS
 }
