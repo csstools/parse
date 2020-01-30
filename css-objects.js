@@ -71,10 +71,21 @@ function initializeCSSObjects(CSS) {
 			toString: CSSDelimiter.prototype.toString
 		}
 	})
+	CSS.createClass('Number', function (details) { oAssign(this, { value: '', unit: '' }, details) }, CSSValue, {
+		value: {
+			toString: function toString() {
+				return '' + this.value + this.unit
+			}
+		}
+	})
 	return CSS
 }
 
 console.log([
-	'' + new CSS.CSSComment({ value: ' Test ', delimiterStart: '/*', delimiterEnd: '*/' }),
-	'' + new CSS.CSSString({ value: 'Test', delimiterStart: '"', delimiterEnd: '"' })
+	'' + new CSS.CSSComment({ value: ' test ', delimiterStart: '/*', delimiterEnd: '*/' }) === '/* test */',
+	'' + new CSS.CSSString({ value: 'test', delimiterStart: '"', delimiterEnd: '"' }) === '"test"',
+	'' + new CSS.CSSNameIdentifier({ value: 'test' }) === 'test',
+	'' + new CSS.CSSHashIdentifier({ value: 'test' }) === '#test',
+	'' + new CSS.CSSAtIdentifier({ value: 'test' }) === '@test',
+	'' + new CSS.CSSNumber({ value: '5', unit: 'px' }) === '5px'
 ])
