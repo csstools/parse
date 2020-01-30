@@ -7,8 +7,11 @@ function initializeCSSObjects(CSS) {
 	var F = Function
 	var O = Object
 	var arrp = A.prototype
+	var aIndexOf = arrp.indexOf
 	var aJoin = arrp.join
 	var aPush = arrp.push
+	var aSlice = arrp.slice
+	var aSplice = arrp.splice
 	var oAssign = O.assign || function (target) {
 		for (var i = 0, source; source = ++i in arguments && O(arguments[i]);)
 			for (var name in source)
@@ -51,8 +54,22 @@ function initializeCSSObjects(CSS) {
 	}, Array, {
 		value: {
 			toString: function toString() {
-				return aJoin.call(O(this.value))
+				return aJoin.call(this, '')
 			}
+		}
+	})
+	var CSSBlock = CSS.createClass('Block', function (details) {
+		oAssign(this, { value: new CSSList, delimiterStart: '', delimiterEnd: '' }, details)
+	}, CSSValue, {
+		value: {
+			append: function append() {
+				aPush.apply(O(this.value), aSlice.call(arguments).filter(filterCSSValuesForParent, this))
+			},
+			replace: function replace(replacee) {
+				var index = aIndexOf.call(O(this.value), replacee)
+				if (index > -1) aSplice.bind(this.value, index, 1).apply(null, aSlice.call(arguments, 1).filter(filterCSSValuesForParent, this))
+			},
+			toString: CSSString.prototype.toString
 		}
 	})
 	CSS.createClass('AtIdentifier', CSSDelimiter, CSSValue, {
@@ -91,15 +108,9 @@ function initializeCSSObjects(CSS) {
 			}
 		}
 	})
-	CSS.createClass('Block', function (details) {
-		oAssign(this, { value: new CSSList, delimiterStart: '', delimiterEnd: '' }, details)
-	}, CSSValue, {
-		value: {
-			toString: function toString() {
-				aJoin.call(this, '')
-			}
-		}
-	})
+	function filterCSSValuesForParent(node) {
+		if (node instanceof CSSValue) return node.parent = this
+	}
 	return CSS
 }
 
@@ -111,12 +122,37 @@ console.log([
 	'' + new CSS.CSSHashIdentifier({ value: 'test' }) === '#test',
 	'' + new CSS.CSSAtIdentifier({ value: 'test' }) === '@test',
 	'' + new CSS.CSSNumber({ value: '5', unit: 'px' }) === '5px',
-	(new CSS.CSSList(
-		new CSS.CSSWhitespace('\n\t'),
-		new CSS.CSSNameIdentifier('color'),
-		new CSS.CSSDelimiter(':'),
-		new CSS.CSSWhitespace(' '),
-		new CSS.CSSNameIdentifier('blue'),
-		new CSS.CSSWhitespace('\n'),
-	))
+	'' + new CSS.CSSBlock({
+		value: new CSS.CSSList(
+			new CSS.CSSWhitespace({ value: '\n\t' }),
+			new CSS.CSSNameIdentifier({ value: 'color' }),
+			new CSS.CSSDelimiter({ value: ':' }),
+			new CSS.CSSWhitespace({ value: ' ' }),
+			new CSS.CSSNameIdentifier({ value: 'blue' }),
+			new CSS.CSSWhitespace({ value: '\n' }),
+		),
+		delimiterStart: '{',
+		delimiterEnd: '}'
+	}) === '{\n\tcolor: blue\n}'
 ])
+
+var cssb = new CSS.CSSBlock({
+	value: new CSS.CSSList(
+		new CSS.CSSNameIdentifier({ value: 'color' }),
+		new CSS.CSSDelimiter({ value: ':' })
+	),
+	delimiterStart: '',
+	delimiterEnd: ''
+})
+
+cssnib = new CSS.CSSNameIdentifier({ value: 'blue' })
+cssnir = new CSS.CSSNameIdentifier({ value: 'rebeccapurple' })
+
+cssb.append(
+	new CSS.CSSWhitespace({ value: ' ' }),
+	cssnib
+)
+
+cssb.replace(cssnib, cssnir)
+
+console.log([ '' + cssb === 'color: rebeccapurple' ])
