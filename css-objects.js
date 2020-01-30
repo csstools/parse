@@ -35,6 +35,9 @@ function initializeCSSObjects(CSS) {
 		get: {
 			index: function() {
 				return CSSBlock.prototype.indexOf.call(O(this.parent), this)
+			},
+			type: function() {
+				return '' + O(this.constructor).name
 			}
 		},
 		value: {
@@ -45,6 +48,15 @@ function initializeCSSObjects(CSS) {
 			replaceSelf: function replaceSelf() {
 				CSSBlock.prototype.replace.bind(O(this.parent), this).apply(null, arguments)
 				return this
+			},
+			valueOf: function valueOf() {
+				var primitive = { type: O(this.constructor).name }
+				for (var name in this) {
+					if (name !== 'parent' && typeof this[name] !== 'function' && this !== window) {
+						primitive[name] = getValueOf(this[name])
+					}
+				}
+				return primitive
 			}
 		}
 	})
@@ -69,6 +81,9 @@ function initializeCSSObjects(CSS) {
 		value: {
 			toString: function toString() {
 				return aJoin.call(this, '')
+			},
+			valueOf: function valueOf() {
+				return arrp.map.call(this, getValueOf)
 			}
 		}
 	})
@@ -146,6 +161,9 @@ function initializeCSSObjects(CSS) {
 	}
 	function forEachCSSValueOffParent(node) {
 		if (O(node).parent === this) return node.parent = null
+	}
+	function getValueOf(value) {
+		return value === O(value) ? value.valueOf() : value
 	}
 	return CSS
 }
