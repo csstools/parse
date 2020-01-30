@@ -1,7 +1,3 @@
-CSS = {}
-
-initializeCSSObjects(CSS)
-
 function initializeCSSObjects(CSS) {
 	var A = Array
 	var F = Function
