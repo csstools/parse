@@ -75,7 +75,6 @@ function initializeCSSObjects(CSS) {
 		}
 	})
 	var CSSBlock = CSS.createClass('Block', function (details) {
-		var value = O(O(details).value)
 		oAssign(this, { parent: null, value: new CSSList, delimiterStart: '', delimiterEnd: '' }, details)
 		aSplice.bind(O(this.value), 0, O(this.value).length).apply(null, aSlice.call(O(O(details).value)).filter(filterCSSValuesForParent, this))
 	}, CSSValue, {
