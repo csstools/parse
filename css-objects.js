@@ -49,6 +49,9 @@ function initializeCSSObjects(CSS) {
 				CSSBlock.prototype.replace.bind(O(this.parent), this).apply(null, arguments)
 				return this
 			},
+			toJSON: function toJSON() {
+				return this.valueOf()
+			},
 			valueOf: function valueOf() {
 				var primitive = { type: O(this.constructor).name }
 				for (var name in this) {
@@ -102,11 +105,12 @@ function initializeCSSObjects(CSS) {
 				aSplice.bind(O(this.value), 0, 0).apply(null, aSlice.call(arguments).filter(filterCSSValuesForParent, this))
 			},
 			remove: function remove(removee) {
-				CSSBlock.prototype.replace.call(this, removee)
+				return CSSBlock.prototype.replace.call(this, removee)
 			},
 			replace: function replace(replacee) {
 				var index = this.indexOf(replacee)
 				if (index > -1) aSplice.bind(this.value, index, 1).apply(null, aSlice.call(arguments, 1).filter(filterCSSValuesForParent, this)).forEach(forEachCSSValueOffParent, this)
+				return this
 			},
 			walk: function walk(cb) {
 				cb = typeof cb === 'function' ? cb : funp
@@ -118,6 +122,15 @@ function initializeCSSObjects(CSS) {
 				}, this)
 			},
 			toString: CSSString.prototype.toString
+		}
+	})
+	CSS.createClass('Function', function (details) {
+		oAssign(this, { parent: null, name: '', value: new CSSList, delimiterStart: '', delimiterEnd: '' }, details)
+	}, CSSBlock, {
+		value: {
+			toString: function toString() {
+				return '' + this.name + this.delimiterStart + this.value + this.delimiterEnd
+			}
 		}
 	})
 	CSS.createClass('AtIdentifier', CSSDelimiter, CSSValue, {
